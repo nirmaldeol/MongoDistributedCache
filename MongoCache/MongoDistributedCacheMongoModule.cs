@@ -32,7 +32,7 @@ namespace MongoCache
                     }
                 });
 
-                context.Services.Replace(ServiceDescriptor.Singleton<IDistributedCache, CoderTechMongoCache>());
+                context.Services.Replace(ServiceDescriptor.Singleton<IDistributedCache, MongoDistributedCache>());
             }
         }
     }
