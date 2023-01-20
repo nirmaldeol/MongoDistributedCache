@@ -1,0 +1,56 @@
+# ASP.NET Core (.NET Framework)
+# Build and test ASP.NET Core projects targeting the full .NET Framework.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- main
+
+stages:
+
+- stage: 'BuildNuget'
+  variables:
+  - name: ProjectName
+    value: 'Mongo.DistributedCache'
+  - name: buildConfiguration
+    value: 'Release'
+
+  jobs:
+  - job:
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    workspace:
+      clean: all
+
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Use NET Core sdk'
+      inputs:
+        packageType: sdk
+        version: 7.x
+        installationPath: $(Agent.ToolsDirectory)/dotnet
+    
+    - task: DotNetCoreCLI@2
+      displayName: "Build Solution"
+      inputs:
+        command: build
+        projects: 'Mongo.DistributedCache.sln'
+        arguments: '--configuration $(buildConfiguration)'
+
+    - task: DotNetCoreCLI@2
+      displayName: "Create Nuget Package"
+      inputs:
+        command: 'pack'
+        packagesToPack: 'Mongo.DistributedCache.csproj'
+        versioningScheme: 'byEnvVar'
+        versionEnvVar: 'packageVersion'
+        outputDir: '$(Build.ArtifactStagingDirectory)/packages/releases'
+        arguments: ' --include-symbols --include-source --configuration $(buildConfiguration)'
+
+    - task: NuGetCommand@2
+      inputs:
+        command: 'push'
+        packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+        nuGetFeedType: 'external'
+        publishFeedCredentials: 'nuget-public-feed'
