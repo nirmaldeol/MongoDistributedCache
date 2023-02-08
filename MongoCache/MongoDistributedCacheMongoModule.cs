@@ -14,22 +14,20 @@ namespace MongoCache
         {
             var configuration = context.Services.GetConfiguration();
 
-            var mongoDbCacheEnabled = configuration["MongoDbCache:IsEnabled"];
-            if (mongoDbCacheEnabled.IsNullOrEmpty() || bool.Parse(mongoDbCacheEnabled))
+            var mongoDbCacheConnectionString = configuration["MongoDbCache:ConnectionString"];
+
+            if (!mongoDbCacheConnectionString.IsNullOrEmpty())
             {
                 context.Services.AddMongoDbCache(options =>
                 {
-                    var mongoDbCacheConnectionString = configuration["MongoDbCache:ConnectionString"];
-                    var mongoDbCacheDatabaseName = configuration["MongoDbCache:DatabaseName"] ?? "MongoCache";
-                    var mongoDbCacheCollectionName = configuration["MongoDbCache:CollectionName"] ?? "appcache";
+                    var mongoDbCacheDatabaseName = configuration["MongoDbCache:DatabaseName"] ?? "AbpCache";
+                    var mongoDbCacheCollectionName = configuration["MongoDbCache:CollectionName"] ?? "appCache";
                     var mongoDbCacheExpiredScanInterval = int.Parse(configuration["MongoDbCache:ExpiredScanInterval"] ?? "10");
-                    if (!mongoDbCacheConnectionString.IsNullOrEmpty())
-                    {
-                        options.ConnectionString = mongoDbCacheConnectionString;
-                        options.DatabaseName = mongoDbCacheDatabaseName;
-                        options.CollectionName = mongoDbCacheCollectionName;
-                        options.ExpiredScanInterval = TimeSpan.FromMinutes(mongoDbCacheExpiredScanInterval);
-                    }
+
+                    options.ConnectionString = mongoDbCacheConnectionString;
+                    options.DatabaseName = mongoDbCacheDatabaseName;
+                    options.CollectionName = mongoDbCacheCollectionName;
+                    options.ExpiredScanInterval = TimeSpan.FromMinutes(mongoDbCacheExpiredScanInterval);
                 });
 
                 context.Services.Replace(ServiceDescriptor.Singleton<IDistributedCache, MongoDistributedCache>());
